@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123b63">
+<link rel="manifest" href="manifest.webmanifest">
+<title>OWS Delay Calculator</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f2f5f9;color:#172333;font-family:Arial,sans-serif}
+main{max-width:480px;margin:24px auto;padding:18px}
+.panel{background:white;border-radius:18px;padding:20px;box-shadow:0 5px 22px #102b4614}
+h1{font-size:24px;margin:0 0 8px}.sub{color:#617184;margin:0 0 22px;line-height:1.4}
+label{display:block;font-weight:700;margin:16px 0 7px}
+input{width:100%;font-size:25px;padding:14px;border:1px solid #bdc9d6;border-radius:10px}
+.result{margin-top:20px;padding:22px 12px;text-align:center;background:#eaf3fb;border-radius:14px}
+.caption{font-size:13px;color:#526579;font-weight:700;letter-spacing:.5px}
+#seconds{font-size:48px;font-weight:800;color:#123b63;margin:8px 0}
+#detail{color:#526579}
+button{border:0;border-radius:10px;padding:13px 16px;font-size:16px;font-weight:700;background:#123b63;color:white;width:100%;margin-top:14px}
+.note{font-size:13px;color:#617184;line-height:1.5;margin-top:18px}
+.error{color:#b42318;font-weight:700}
+</style>
+</head>
+<body>
+<main><section class="panel">
+<h1>OWS Delay Calculator</h1>
+<p class="sub">Enter both clock readings in minutes:seconds. The delay updates automatically in seconds.</p>
+<label for="game">Live game time (MM:SS)</label>
+<input id="game" inputmode="numeric" value="35:00" aria-label="Live game time">
+<label for="ows">OWS timer (MM:SS)</label>
+<input id="ows" inputmode="numeric" value="32:00" aria-label="OWS timer">
+<div class="result">
+<div class="caption">DELAY TO ENTER IN OWS</div>
+<div id="seconds">180 sec</div>
+<div id="detail">Difference: 3 minutes 0 seconds</div>
+<button id="copy">Copy delay</button>
+</div>
+<p id="message" class="note">Tip: If both clocks run at the same speed, their difference stays constant. Take both readings at roughly the same moment.</p>
+</section></main>
+<script>
+const game=document.getElementById('game'), ows=document.getElementById('ows');
+const seconds=document.getElementById('seconds'), detail=document.getElementById('detail'), message=document.getElementById('message');
+function parse(v){const m=v.trim().match(/^(\\d{1,3}):([0-5]\\d)$/);return m?Number(m[1])*60+Number(m[2]):null}
+function update(){
+ const a=parse(game.value),b=parse(ows.value);
+ if(a===null||b===null){seconds.textContent='--';detail.textContent='Use MM:SS, for example 35:20';message.className='note error';message.textContent='Please enter both times correctly.';return}
+ const d=a-b;
+ if(d<0){seconds.textContent='Check clocks';detail.textContent='OWS appears ahead of the game clock.';message.className='note error';return}
+ seconds.textContent=d+' sec';
+ detail.textContent='Difference: '+Math.floor(d/60)+' minutes '+(d%60)+' seconds';
+ message.className='note';message.textContent='If both clocks run at the same speed, their difference stays constant.';
+}
+game.addEventListener('input',update);ows.addEventListener('input',update);
+document.getElementById('copy').addEventListener('click',async()=>{
+ const a=parse(game.value),b=parse(ows.value);
+ if(a===null||b===null||a<b)return;
+ try{await navigator.clipboard.writeText(String(a-b));document.getElementById('copy').textContent='Copied!';}
+ catch(e){document.getElementById('copy').textContent='Copy unavailable';}
+});
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));
+update();
+</script>
+</body></html>
